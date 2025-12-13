@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Lista de Productos - USD a Bs</title>
+<style>
+#scanner {
+    position: fixed;
+    inset: 0;
+    background: black;
+    z-index: 2000;
+}
+
+#camera {
+    width: 100%;
+    height: 80%;
+}
+
+#scanner button {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+}
+#btnScanner {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    font-size: 24px;
+    border: none;
+    background: #2ecc71;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+.seleccionado {
+    background-color: #c4f7c3 !important;
+}
+body.tema-oscuro .seleccionado {
+    background-color: #32ff7e !important;  /* Verde neón fuerte */
+    color:black !important; /* Para que el texto se vea perfecto */
+}
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f3f6ff;
+    }
+    h2 {
+        text-align: center;
+        color: #2c4cff;
+    }
+    input, button {
+        padding: 8px;
+        margin: 5px;
+        border-radius: 5px;
+        border: 1px solid #999;
+    }
+    button {
+        background: #2c4cff;
+        color: white;
+        cursor: pointer;
+    }
+    table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+    }
+    th {
+        background: #dfe3ff;
+    }
+    .delete-btn {
+        background: red;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+    }
+    .edit-btn {
+        background: #ffa500;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        margin-right: 5px;
+    }
+    #ordenadores {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+}
+#ordenadores button {
+    background: #2c4cff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+.encontrado {
+    background-color: #c4f7c3 !important;
+}
+body.tema-oscuro {
+    background:#0f1320;
+    color:white;
+}
+
+body.tema-oscuro input,
+body.tema-oscuro button {
+    background:#1d2235;
+    color:white;
+    border:1px solid #555;
+}
+
+body.tema-oscuro table th {
+    background:#2b3250;
+}
+
+body.tema-oscuro table td {
+    background:#1a1f33;
+    color:white;
+}
+
+body.tema-oscuro .delete-btn {
+    background:#bb2d2d;
+}
+
+body.tema-oscuro .edit-btn {
+    background:#d88a00;
+}
+
+body.tema-oscuro #ordenadores button {
+    background:#1d60ff;
+}
+body.tema-oscuro tr.seleccionado td {
+    background-color: #32ff7e !important;
+    color: black !important;
+}
+
+body.tema-oscuro #totales {
+    color: #32ff7e;
+}
+body.tema-oscuro #totales {
+    color: #32ff7e;
+}
+body.tema-oscuro #modal-cantidad div {
+    background:#1f2433;
+    color:white;
+}
+body.tema-oscuro #modal-cantidad button {
+    background:#2b3250;
+    color:white;
+    border:none;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Lista de Productos USD → Bs</h2>
+
+<button id="tema-btn" onclick="toggleTema()" 
+style="position:fixed; top:15px; left:15px; z-index:999; padding:8px 12px; border:none; 
+border-radius:8px; background:#2c4cff; color:white; cursor:pointer;">
+🌙
+</button>
+
+<button id="btnScanner" onclick="abrirScanner()">📸</button>
+
+<label>Tasa del dólar (USD → Bs): </label>
+<input type="number" id="tasa" placeholder="Ej: 40" oninput="guardarTasa(); actualizarPrecios()" />
+
+<div id="fila-superior" style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+    
+    <div></div> <!-- espacio vacío para alinear -->
+    
+    <div id="totales" style="font-weight:bold; font-size:16px;">
+        TOTAL: USD <span id="total-usd">0.00</span> / Bs <span id="total-bs">0.00</span>
+    </div>
+</div>
+
+<h3>Agregar producto</h3>
+<input type="text" id="busqueda" placeholder="Buscar producto..." oninput="buscarProducto()" style="float:right; margin-top:10px;">
+<div id="ordenadores">
+    <button id="ordenToggleBtn" onclick="toggleOrden()">Ordenar por Precio</button>
+</div>
+<input type="text" id="nombre" placeholder="Nombre del producto" />
+<input type="number" id="precio" placeholder="Precio en USD" />
+<button onclick="agregarProducto()">Agregar</button>
+
+<table id="tabla">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Precio USD</th>
+            <th>Precio Bs</th>
+            <th>Acción</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+
+<script>
+/* Corrected main script for Productos app.
+   Fixes: ensure modal button bindings after DOM load,
+   persist products and quantities, ensure calcularTotal updates on changes.
+*/
+
+let ordenActual = "nombre"; // puede ser "nombre" o "precio"
+let productos = []; // main array
+
+// Save products array to localStorage
+function guardarProductos() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+}
+
+// Load products array from localStorage
+function cargarProductos() {
+    const data = localStorage.getItem("productos");
+    productos = data ? JSON.parse(data) : [];
+}
+
+// Render table from productos[]
+function renderizarTabla() {
+    const tabla = document.querySelector("#tabla tbody");
+    tabla.innerHTML = "";
+
+    productos.forEach((prod, index) => {
+        const cant = prod.cant || 1;
+        const fila = document.createElement("tr");
+        if (cant > 1) fila.setAttribute("data-cant", cant);
+        fila.innerHTML = `
+            <td class="celda-nombre">${prod.nombre}${cant > 1 ? ' (x' + cant + ')' : ''}</td>
+            <td class="usd">${Number(prod.usd).toFixed(2)}</td>
+            <td class="bs"></td>
+            <td>
+                <button class="edit-btn" onclick="editarProducto(${index})">Editar</button>
+                <button class="delete-btn" onclick="eliminarProducto(${index})">X</button>
+            </td>
+        `;
+        tabla.appendChild(fila);
+    });
+
+    actualizarPrecios();
+    activarSeleccionFila();
+    activarLongPress();
+}
+
+// Utility to escape HTML (in case names contain < or &)
+function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+}
+
+// Save tasa
+function guardarTasa() {
+    const tasa = document.getElementById("tasa").value;
+    localStorage.setItem("tasaDolar", tasa);
+    actualizarPrecios(); // recalc Bs immediately
+}
+
+// Add product
+function agregarProducto() {
+    const nombreEl = document.getElementById("nombre");
+    const precioEl = document.getElementById("precio");
+    const nombre = nombreEl.value.trim();
+    const precioUSD = parseFloat(precioEl.value);
+
+    if (!nombre || isNaN(precioUSD)) {
+        alert("Ingresa nombre y precio correcto");
+        return;
+    }
+
+    productos.push({ nombre: nombre, usd: precioUSD, cant: 1 });
+    guardarProductos();
+    renderizarTabla();
+
+    nombreEl.value = "";
+    precioEl.value = "";
+}
+
+// Delete
+function eliminarProducto(index) {
+    if (!confirm("Eliminar este producto?")) return;
+    productos.splice(index, 1);
+    guardarProductos();
+    renderizarTabla();
+}
+
+// Edit
+function editarProducto(index) {
+    const prod = productos[index];
+    const nuevoNombre = prompt("Nuevo nombre del producto:", prod.nombre);
+    if (nuevoNombre === null) return;
+    const nn = nuevoNombre.trim();
+    if (!nn) return;
+
+    const nuevoPrecioRaw = prompt("Nuevo precio USD:", prod.usd);
+    if (nuevoPrecioRaw === null) return;
+    const nuevoPrecio = parseFloat(nuevoPrecioRaw);
+    if (isNaN(nuevoPrecio)) return;
+
+    productos[index] = { nombre: nn, usd: nuevoPrecio, cant: prod.cant || 1 };
+    guardarProductos();
+    renderizarTabla();
+}
+
+// Update Bs cells and total
+function actualizarPrecios() {
+    const tasa = parseFloat(localStorage.getItem("tasaDolar")) || parseFloat(document.getElementById("tasa").value);
+    const filas = document.querySelectorAll("#tabla tbody tr");
+    filas.forEach(fila => {
+        const precioUSD = parseFloat(fila.querySelector(".usd").textContent);
+        const celdaBS = fila.querySelector(".bs");
+        if (!isNaN(tasa)) {
+            celdaBS.textContent = (precioUSD * tasa).toFixed(2);
+        } else {
+            celdaBS.textContent = "";
+        }
+    });
+    calcularTotal();
+}
+
+// Sorting
+function ordenarNombre() {
+    productos.sort((a,b) => a.nombre.localeCompare(b.nombre));
+    guardarProductos();
+    renderizarTabla();
+}
+function ordenarPrecio() {
+    productos.sort((a,b) => a.usd - b.usd);
+    guardarProductos();
+    renderizarTabla();
+}
+
+// Search highlights
+function buscarProducto() {
+    const texto = document.getElementById("busqueda").value.toLowerCase();
+    const filas = document.querySelectorAll("#tabla tbody tr");
+
+    let primeraCoinc = null;
+
+    filas.forEach(fila => {
+        // Quitar marca de encontrado (pero NO borrar seleccionado)
+        fila.classList.remove("encontrado");
+
+        const nombre = fila.children[0].textContent.toLowerCase();
+
+        if (texto !== "" && nombre.includes(texto)) {
+            // aplicar franja verde
+            fila.classList.add("seleccionado");
+            fila.classList.add("encontrado");
+
+            if (!primeraCoinc) primeraCoinc = fila;
+        }
+    });
+
+    // Quitar selecci�n a los que NO coinciden
+    // Si el buscador est� vac�o  quitar todas las selecciones
+if (texto === "") {
+    // Quitar todas las selecciones
+    filas.forEach(fila => fila.classList.remove("seleccionado"));
+
+    // 🔥 Nueva línea: subir al inicio suave
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+} else {
+    // Si hay texto → mantener solo los encontrados
+    filas.forEach(fila => {
+        const nombre = fila.children[0].textContent.toLowerCase();
+        if (!nombre.includes(texto)) {
+            fila.classList.remove("seleccionado");
+        }
+    });
+}
+
+    // Scroll al primer encontrado
+    if (primeraCoinc) {
+        primeraCoinc.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+}
+
+// Theme toggle
+function toggleTema() {
+    document.body.classList.toggle("tema-oscuro");
+    const btn = document.getElementById("tema-btn");
+    if (document.body.classList.contains("tema-oscuro")) {
+        btn.textContent = "☀️";
+        localStorage.setItem("tema", "oscuro");
+    } else {
+        btn.textContent = "🌙";
+        localStorage.setItem("tema", "claro");
+    }
+}
+function aplicarTemaGuardado() {
+    const tema = localStorage.getItem("tema");
+    if (tema === "oscuro") {
+        document.body.classList.add("tema-oscuro");
+        const b = document.getElementById("tema-btn");
+        if (b) b.textContent = "☀️";
+    }
+}
+
+// Selection toggle on click (multi-select allowed)
+function activarSeleccionFila() {
+    const filas = document.querySelectorAll("#tabla tbody tr");
+    filas.forEach(fila => {
+        fila.onclick = () => {
+            // Toggle selection
+            if (fila.classList.contains("seleccionado")) {
+                fila.classList.remove("seleccionado");
+            } else {
+                fila.classList.add("seleccionado");
+            }
+            calcularTotal();
+        };
+    });
+}
+
+// Calculate total considering quantities (data-cant or productos[].cant)
+function calcularTotal() {
+    let totalUSD = 0;
+    const filas = document.querySelectorAll("#tabla tbody tr");
+    filas.forEach((fila, idx) => {
+        if (fila.classList.contains("seleccionado")) {
+            const precio = parseFloat(fila.querySelector(".usd").textContent) || 0;
+            const cantAttr = parseInt(fila.getAttribute("data-cant"));
+            // try to map fila -> producto by text match to be robust
+            let cant = 1;
+            if (!isNaN(cantAttr)) cant = cantAttr;
+            else if (productos[idx] && productos[idx].cant) cant = productos[idx].cant;
+            totalUSD += precio * cant;
+        }
+    });
+    const tasa = parseFloat(localStorage.getItem("tasaDolar")) || parseFloat(document.getElementById("tasa").value);
+    const totalBS = isNaN(tasa) ? 0 : totalUSD * tasa;
+    document.getElementById("total-usd").textContent = totalUSD.toFixed(2);
+    document.getElementById("total-bs").textContent = totalBS.toFixed(2);
+}
+
+// LONG PRESS / modal quantity
+let filaActual = null;
+let indexActual = -1;
+let cantidadActual = 1;
+
+function activarLongPress() {
+    const filas = document.querySelectorAll("#tabla tbody tr");
+
+    filas.forEach((fila, index) => {
+        const celdaNombre = fila.querySelector(".celda-nombre");
+        if (!celdaNombre) return;
+
+        let timer = null;
+
+        // TOUCH para tel�fonos
+        celdaNombre.addEventListener("touchstart", () => {
+            timer = setTimeout(() => abrirModalCantidad(fila, index), 500);
+        }, { passive: true });
+
+        celdaNombre.addEventListener("touchend", () => {
+            if (timer) clearTimeout(timer);
+        }, { passive: true });
+
+        // MOUSE (PC o laptop)
+        celdaNombre.addEventListener("mousedown", () => {
+            timer = setTimeout(() => abrirModalCantidad(fila, index), 600);
+        });
+
+        celdaNombre.addEventListener("mouseup", () => {
+            if (timer) clearTimeout(timer);
+        });
+
+        celdaNombre.addEventListener("mouseleave", () => {
+            if (timer) clearTimeout(timer);
+        });
+    });
+}
+
+function abrirModalCantidad(fila, index) {
+    filaActual = fila;
+    indexActual = index;
+    cantidadActual = parseInt(fila.getAttribute("data-cant")) || (productos[index] && productos[index].cant) || 1;
+    document.getElementById("cantidad-valor").textContent = cantidadActual;
+    document.getElementById("modal-cantidad").style.display = "flex";
+}
+
+// Setup modal buttons and behavior after DOM ready
+function setupModalBindings() {
+    const btnMenos = document.getElementById("menos");
+    const btnMas = document.getElementById("mas");
+    const btnAceptar = document.getElementById("aceptar-cantidad");
+    const modal = document.getElementById("modal-cantidad");
+
+    if (btnMenos) {
+        btnMenos.onclick = () => {
+            if (cantidadActual > 1) cantidadActual--;
+            document.getElementById("cantidad-valor").textContent = cantidadActual;
+        };
+    }
+    if (btnMas) {
+        btnMas.onclick = () => {
+            cantidadActual++;
+            document.getElementById("cantidad-valor").textContent = cantidadActual;
+        };
+    }
+    if (btnAceptar) {
+        btnAceptar.onclick = () => {
+            if (filaActual) {
+                filaActual.setAttribute("data-cant", cantidadActual);
+                // persist to productos array if index valid
+                if (indexActual >= 0 && productos[indexActual]) {
+                    productos[indexActual].cant = cantidadActual;
+                    guardarProductos();
+                }
+                filaActual.classList.add("seleccionado");
+            }
+            modal.style.display = "none";
+            renderizarTabla();
+            calcularTotal();
+        };
+    }
+
+    // close modal when clicking outside inner box
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) modal.style.display = "none";
+        });
+    }
+}
+
+// Cargar tasa guardada (falta era esta funci�n)
+function cargarTasa() {
+    let tasa = localStorage.getItem("tasaDolar");
+    if (tasa !== null) {
+        // Si el input existe, le ponemos el valor
+        const el = document.getElementById("tasa");
+        if (el) el.value = tasa;
+    }
+}
+// Initialize on load
+window.addEventListener("load", () => {
+    aplicarTemaGuardado();
+    cargarTasa();
+    cargarProductos();
+    renderizarTabla();
+    setupModalBindings();
+});
+function toggleOrden() {
+    if (ordenActual === "nombre") {
+        // ORDENAR POR PRECIO
+        productos.sort((a, b) => a.usd - b.usd);
+        ordenActual = "precio";
+        document.getElementById("ordenToggleBtn").textContent = "Ordenar A-Z";
+    } else {
+        // ORDENAR POR NOMBRE
+        productos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        ordenActual = "nombre";
+        document.getElementById("ordenToggleBtn").textContent = "Ordenar por Precio";
+    }
+
+    guardarProductos();
+    renderizarTabla();
+}
+function abrirScanner() {
+    document.getElementById("scanner").style.display = "block";
+
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#camera'),
+            constraints: {
+                facingMode: "environment"
+            }
+        },
+        decoder: {
+            readers: ["ean_reader", "upc_reader"]
+        }
+    }, function(err) {
+        if (err) {
+            alert("No se pudo abrir la c�mara");
+            return;
+        }
+        Quagga.start();
+    });
+
+    Quagga.offDetected(onDetectarCodigo);
+Quagga.onDetected(onDetectarCodigo);
+}
+
+function cerrarScanner() {
+    Quagga.stop();
+    document.getElementById("scanner").style.display = "none";
+}
+
+function onDetectarCodigo(result) {
+    const codigo = result.codeResult.code;
+
+    alert("C�digo detectado: " + codigo);
+
+    Quagga.offDetected(onDetectarCodigo);
+    cerrarScanner();
+}
+</script>
+
+<!-- MODAL DE CANTIDAD -->
+<div id="modal-cantidad" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
+    
+    <div style="background:white; padding:20px; border-radius:12px; width:260px; text-align:center;">
+        <h3>Selecciona cantidad</h3>
+
+        <div style="display:flex; justify-content:center; align-items:center; margin:15px 0;">
+            <button id="menos" style="width:40px; height:40px; font-size:20px;">−</button>
+
+            <span id="cantidad-valor" style="margin:0 20px; font-size:20px;">1</span>
+
+            <button id="mas" style="width:40px; height:40px; font-size:20px;">+</button>
+        </div>
+
+        <button id="aceptar-cantidad" 
+                style="padding:10px 20px; border:none; background:#2c4cff; color:white; border-radius:8px;">
+            Aceptar
+        </button>
+    </div>
+</div>
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+<div id="scanner" style="display:none;">
+    <div id="camera"></div>
+    <button onclick="cerrarScanner()">Cerrar</button>
+</div>
+</body>
+</html>
