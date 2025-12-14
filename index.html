@@ -630,7 +630,6 @@ function cerrarScanner() {
 function onDetectarCodigo(result) {
     const codigoLeido = String(result.codeResult.code).trim();
 
-    // Buscar producto por código (forzando string)
     const index = productos.findIndex(p =>
         String(p.codigo).trim() === codigoLeido
     );
@@ -639,17 +638,25 @@ function onDetectarCodigo(result) {
         const prod = productos[index];
         const tasa = parseFloat(document.getElementById("tasa").value) || 0;
 
-        // Limpiar selecciones previas
-        document.querySelectorAll("#tabla tbody tr").forEach(f => {
-            f.classList.remove("encontrado", "seleccionado");
-        });
+        const filas = document.querySelectorAll("#tabla tbody tr");
 
-        const fila = document.querySelectorAll("#tabla tbody tr")[index];
+        // Limpiar marcas previas
+        filas.forEach(f => f.classList.remove("encontrado"));
+
+        const fila = filas[index];
+
+        // 🔴 SOLO resaltado visual (NO seleccionado)
         fila.classList.add("encontrado");
+
         fila.scrollIntoView({
             behavior: "smooth",
             block: "center"
         });
+
+        // 🟢 AQUÍ VA EL setTimeout (ESTE ES EL LUGAR)
+        setTimeout(() => {
+            fila.classList.remove("encontrado");
+        }, 2500);
 
         alert(
             `Producto encontrado:\n\n` +
