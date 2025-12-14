@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <title>Lista de Productos - USD a Bs</title>
 <style>
+.info-producto {
+    margin-bottom: 12px;
+    font-size: 15px;
+    line-height: 1.4;
+    text-align: center;
+}
 #scanner {
     position: fixed;
     inset: 0;
@@ -635,42 +641,26 @@ function onDetectarCodigo(result) {
     );
 
     if (index !== -1) {
+        productoEscaneadoIndex = index;
+
         const prod = productos[index];
         const tasa = parseFloat(document.getElementById("tasa").value) || 0;
 
-        const filas = document.querySelectorAll("#tabla tbody tr");
+        document.getElementById("infoProducto").innerHTML = `
+            <strong>${prod.nombre}</strong><br>
+            💵 USD: $${prod.usd}<br>
+            💴 Bs: ${(prod.usd * tasa).toFixed(2)}
+        `;
 
-        // Limpiar marcas previas
-        filas.forEach(f => f.classList.remove("encontrado"));
-
-        const fila = filas[index];
-
-        // 🔴 SOLO resaltado visual (NO seleccionado)
-        fila.classList.add("encontrado");
-
-        fila.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
-
-        // 🟢 AQUÍ VA EL setTimeout (ESTE ES EL LUGAR)
-        setTimeout(() => {
-            fila.classList.remove("encontrado");
-        }, 2500);
-
-        alert(
-            `Producto encontrado:\n\n` +
-            `🛒 ${prod.nombre}\n` +
-            `💵 USD: $${prod.usd}\n` +
-            `💴 Bs: ${(prod.usd * tasa).toFixed(2)}`
-        );
+        cerrarScanner();
+        abrirModalCantidad();
 
     } else {
-        alert("⚠️ Producto no registrado en la lista");
+        alert("⚠️ Producto no registrado");
+        cerrarScanner();
     }
 
     Quagga.offDetected(onDetectarCodigo);
-    cerrarScanner();
 }
 </script>
 
@@ -678,7 +668,21 @@ function onDetectarCodigo(result) {
 <div id="modal-cantidad" 
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
-    
+
+    <div id="modalCantidad">
+    <div class="modal-contenido">
+
+        <div id="infoProducto" class="info-producto"></div>
+
+        <div class="cantidad-controls">
+            <button id="menos">−</button>
+            <input id="cantidad" type="number" value="1" min="1">
+            <button id="mas">+</button>
+        </div>
+
+        <button id="aceptarCantidad">Aceptar</button>
+    </div>
+    </div>
     <div style="background:white; padding:20px; border-radius:12px; width:260px; text-align:center;">
         <h3>Selecciona cantidad</h3>
 
@@ -692,7 +696,7 @@ function onDetectarCodigo(result) {
 
         <button id="aceptar-cantidad" 
                 style="padding:10px 20px; border:none; background:#2c4cff; color:white; border-radius:8px;">
-            Aceptar
+            Agregar al total
         </button>
     </div>
 </div>
