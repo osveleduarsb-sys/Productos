@@ -628,9 +628,40 @@ function cerrarScanner() {
 }
 
 function onDetectarCodigo(result) {
-    const codigo = result.codeResult.code;
+    const codigoLeido = String(result.codeResult.code).trim();
 
-    alert("C�digo detectado: " + codigo);
+    // Buscar producto por código (forzando string)
+    const index = productos.findIndex(p =>
+        String(p.codigo).trim() === codigoLeido
+    );
+
+    if (index !== -1) {
+        const prod = productos[index];
+        const tasa = parseFloat(document.getElementById("tasa").value) || 0;
+
+        // Limpiar selecciones previas
+        document.querySelectorAll("#tabla tbody tr").forEach(f => {
+            f.classList.remove("encontrado", "seleccionado");
+        });
+
+        const fila = document.querySelectorAll("#tabla tbody tr")[index];
+        fila.classList.add("encontrado", "seleccionado");
+
+        fila.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+
+        alert(
+            `Producto encontrado:\n\n` +
+            `🛒 ${prod.nombre}\n` +
+            `💵 USD: $${prod.usd}\n` +
+            `💴 Bs: ${(prod.usd * tasa).toFixed(2)}`
+        );
+
+    } else {
+        alert("⚠️ Producto no registrado en la lista");
+    }
 
     Quagga.offDetected(onDetectarCodigo);
     cerrarScanner();
