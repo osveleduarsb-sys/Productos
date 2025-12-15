@@ -189,6 +189,8 @@ border-radius:8px; background:#2c4cff; color:white; cursor:pointer;">
 <label>Tasa del dólar (USD → Bs): </label>
 <input type="number" id="tasa" placeholder="Ej: 40" oninput="guardarTasa(); actualizarPrecios()" />
 
+<div id="infoProducto" class="info-producto"></div>
+    
 <div id="fila-superior" style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
     
     <div></div> <!-- espacio vacío para alinear -->
@@ -553,26 +555,28 @@ function setupModalBindings() {
         };
     }
     if (btnAceptar) {
-        btnAceptar.onclick = () => {
-            btnAceptar.onclick = () => {
-    if (productoEscaneadoIndex !== null && productos[productoEscaneadoIndex]) {
+    btnAceptar.onclick = () => {
 
-        productos[productoEscaneadoIndex].cant =
-            (productos[productoEscaneadoIndex].cant || 0) + cantidadActual;
+        if (productoEscaneadoIndex !== null && productos[productoEscaneadoIndex]) {
 
-        guardarProductos();
-        renderizarTabla();
+            // sumar cantidad
+            productos[productoEscaneadoIndex].cant =
+                (productos[productoEscaneadoIndex].cant || 0) + cantidadActual;
 
-        // seleccionar automáticamente la fila
-        const fila = document.querySelectorAll("#tabla tbody tr")[productoEscaneadoIndex];
-        if (fila) fila.classList.add("seleccionado");
+            guardarProductos();
+            renderizarTabla();
 
-        calcularTotal();
-    }
+            // marcar fila seleccionada
+            const fila = document.querySelectorAll("#tabla tbody tr")[productoEscaneadoIndex];
+            if (fila) fila.classList.add("seleccionado");
 
-    document.getElementById("modal-cantidad").style.display = "none";
-    productoEscaneadoIndex = null;
-};
+            calcularTotal();
+        }
+
+        document.getElementById("modal-cantidad").style.display = "none";
+        productoEscaneadoIndex = null;
+    };
+}
             modal.style.display = "none";
             renderizarTabla();
             calcularTotal();
@@ -655,11 +659,14 @@ function cerrarScanner() {
 function onDetectarCodigo(result) {
     const codigoLeido = String(result.codeResult.code).trim();
 
-    const index = productos.findIndex(p =>
-    String(p.codigo || "")
+    const codigoLeidoLimpio = codigoLeido.replace(/^0+/, "");
+
+const index = productos.findIndex(p => {
+    const guardado = String(p.codigo || "")
         .replace(/\s/g, "")
-        .endsWith(codigoLeido)
-);
+        .replace(/^0+/, "");
+    return guardado === codigoLeidoLimpio;
+});
 
     if (index !== -1) {
         const prod = productos[index];
