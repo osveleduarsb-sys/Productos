@@ -326,6 +326,7 @@ function eliminarProducto(index) {
 // Edit
 function editarProducto(index) {
     const prod = productos[index];
+
     const nuevoNombre = prompt("Nuevo nombre del producto:", prod.nombre);
     if (nuevoNombre === null) return;
     const nn = nuevoNombre.trim();
@@ -336,7 +337,14 @@ function editarProducto(index) {
     const nuevoPrecio = parseFloat(nuevoPrecioRaw);
     if (isNaN(nuevoPrecio)) return;
 
-    productos[index] = { nombre: nn, usd: nuevoPrecio, cant: prod.cant || 1 };
+    // 🔥 MANTENER EL CÓDIGO DE BARRAS
+    productos[index] = {
+        nombre: nn,
+        usd: nuevoPrecio,
+        cant: prod.cant || 1,
+        codigo: prod.codigo
+    };
+
     guardarProductos();
     renderizarTabla();
 }
@@ -546,15 +554,25 @@ function setupModalBindings() {
     }
     if (btnAceptar) {
         btnAceptar.onclick = () => {
-            if (filaActual) {
-                filaActual.setAttribute("data-cant", cantidadActual);
-                // persist to productos array if index valid
-                if (indexActual >= 0 && productos[indexActual]) {
-                    productos[indexActual].cant = cantidadActual;
-                    guardarProductos();
-                }
-                filaActual.classList.add("seleccionado");
-            }
+            btnAceptar.onclick = () => {
+    if (productoEscaneadoIndex !== null && productos[productoEscaneadoIndex]) {
+
+        productos[productoEscaneadoIndex].cant =
+            (productos[productoEscaneadoIndex].cant || 0) + cantidadActual;
+
+        guardarProductos();
+        renderizarTabla();
+
+        // seleccionar automáticamente la fila
+        const fila = document.querySelectorAll("#tabla tbody tr")[productoEscaneadoIndex];
+        if (fila) fila.classList.add("seleccionado");
+
+        calcularTotal();
+    }
+
+    document.getElementById("modal-cantidad").style.display = "none";
+    productoEscaneadoIndex = null;
+};
             modal.style.display = "none";
             renderizarTabla();
             calcularTotal();
@@ -638,8 +656,10 @@ function onDetectarCodigo(result) {
     const codigoLeido = String(result.codeResult.code).trim();
 
     const index = productos.findIndex(p =>
-        String(p.codigo).trim() === codigoLeido
-    );
+    String(p.codigo || "")
+        .replace(/\s/g, "")
+        .endsWith(codigoLeido)
+);
 
     if (index !== -1) {
         const prod = productos[index];
