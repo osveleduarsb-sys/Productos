@@ -228,6 +228,7 @@ border-radius:8px; background:#2c4cff; color:white; cursor:pointer;">
 
 let ordenActual = "nombre"; // puede ser "nombre" o "precio"
 let productos = []; // main array
+let productoEscaneadoIndex = null;   
 
 // Save products array to localStorage
 function guardarProductos() {
@@ -516,10 +517,10 @@ function activarLongPress() {
     });
 }
 
-function abrirModalCantidad(fila, index) {
-    filaActual = fila;
-    indexActual = index;
-    cantidadActual = parseInt(fila.getAttribute("data-cant")) || (productos[index] && productos[index].cant) || 1;
+function abrirModalCantidad(index) {
+    productoEscaneadoIndex = index;
+    cantidadActual = productos[index].cant || 1;
+
     document.getElementById("cantidad-valor").textContent = cantidadActual;
     document.getElementById("modal-cantidad").style.display = "flex";
 }
@@ -641,8 +642,6 @@ function onDetectarCodigo(result) {
     );
 
     if (index !== -1) {
-        productoEscaneadoIndex = index;
-
         const prod = productos[index];
         const tasa = parseFloat(document.getElementById("tasa").value) || 0;
 
@@ -653,7 +652,7 @@ function onDetectarCodigo(result) {
         `;
 
         cerrarScanner();
-        abrirModalCantidad();
+        abrirModalCantidad(index); // 👈 AQUÍ ESTÁ LA MAGIA
 
     } else {
         alert("⚠️ Producto no registrado");
@@ -668,21 +667,7 @@ function onDetectarCodigo(result) {
 <div id="modal-cantidad" 
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999;">
-
-    <div id="modalCantidad">
-    <div class="modal-contenido">
-
-        <div id="infoProducto" class="info-producto"></div>
-
-        <div class="cantidad-controls">
-            <button id="menos">−</button>
-            <input id="cantidad" type="number" value="1" min="1">
-            <button id="mas">+</button>
-        </div>
-
-        <button id="aceptarCantidad">Aceptar</button>
-    </div>
-    </div>
+    
     <div style="background:white; padding:20px; border-radius:12px; width:260px; text-align:center;">
         <h3>Selecciona cantidad</h3>
 
