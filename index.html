@@ -8,7 +8,7 @@
     background-color: #c4f7c3 !important;
 }
 body.tema-oscuro .seleccionado {
-    background-color: #32ff7e !important;  /* Verde neÃ³n fuerte */
+    background-color: #32ff7e !important;  /* Verde neón fuerte */
     color:black !important; /* Para que el texto se vea perfecto */
 }
     body {
@@ -136,20 +136,20 @@ body.tema-oscuro #modal-cantidad button {
 
 <body>
 
-<h2>Lista de Productos USD â†’ Bs</h2>
+<h2>Lista de Productos USD → Bs</h2>
 
 <button id="tema-btn" onclick="toggleTema()" 
 style="position:fixed; top:15px; left:15px; z-index:999; padding:8px 12px; border:none; 
 border-radius:8px; background:#2c4cff; color:white; cursor:pointer;">
-ðŸŒ™
+🌙
 </button>
 
-<label>Tasa del dÃ³lar (USD â†’ Bs): </label>
+<label>Tasa del dólar (USD → Bs): </label>
 <input type="number" id="tasa" placeholder="Ej: 40" oninput="guardarTasa(); actualizarPrecios()" />
 
 <div id="fila-superior" style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
     
-    <div></div> <!-- espacio vacÃ­o para alinear -->
+    <div></div> <!-- espacio vacío para alinear -->
     
     <div id="totales" style="font-weight:bold; font-size:16px;">
         TOTAL: USD <span id="total-usd">0.00</span> / Bs <span id="total-bs">0.00</span>
@@ -172,7 +172,7 @@ border-radius:8px; background:#2c4cff; color:white; cursor:pointer;">
             <th>Producto</th>
             <th>Precio USD</th>
             <th>Precio Bs</th>
-            <th>AcciÃ³n</th>
+            <th>Acción</th>
         </tr>
     </thead>
     <tbody></tbody>
@@ -246,14 +246,14 @@ function agregarProducto() {
     document.getElementById("precio").value = "";
 }
 
-// Eliminar producto por Ã­ndice
+// Eliminar producto por índice
 function eliminarProducto(index) {
     productos.splice(index, 1);
     guardarProductos();
     renderizarTabla();
 }
 
-// Editar producto por Ã­ndice
+// Editar producto por índice
 function editarProducto(index) {
     let prod = productos[index];
 
@@ -324,10 +324,10 @@ function toggleTema() {
 
     let btn = document.getElementById("tema-btn");
     if (document.body.classList.contains("tema-oscuro")) {
-        btn.textContent = "â˜€ï¸";
+        btn.textContent = "☀️";
         localStorage.setItem("tema", "oscuro");
     } else {
-        btn.textContent = "ðŸŒ™";
+        btn.textContent = "🌙";
         localStorage.setItem("tema", "claro");
     }
 }
@@ -338,11 +338,11 @@ function aplicarTemaGuardado() {
     if (temaGuardado === "oscuro") {
         document.body.classList.add("tema-oscuro");
         let b = document.getElementById("tema-btn");
-        if (b) b.textContent = "â˜€ï¸";
+        if (b) b.textContent = "☀️";
     }
 }
 
-// SELECCIÃ“N de filas (clic simple) â€” ahora permite selecciÃ³n mÃºltiple y toggle
+// SELECCIÓN de filas (clic simple) — ahora permite selección múltiple y toggle
 function activarSeleccionFila() {
     let filas = document.querySelectorAll("#tabla tbody tr");
 
@@ -420,7 +420,7 @@ function abrirModalCantidad(fila, index) {
     cantidadActual = parseInt(fila.getAttribute("data-cant")) || (productos[index] && productos[index].cant) || 1;
     document.getElementById("cantidad-valor").textContent = cantidadActual;
     document.getElementById("modal-cantidad").style.display = "flex";
-    // guardar Ã­ndice en modal para actualizar productos array al aceptar
+    // guardar índice en modal para actualizar productos array al aceptar
     document.getElementById("modal-cantidad").setAttribute("data-index", index);
 }
 
@@ -452,7 +452,7 @@ window.onload = function() {
             if (filaActual) {
                 filaActual.setAttribute("data-cant", cantidadActual);
 
-                // Actualizar tambiÃ©n en el array 'productos' para persistir la cantidad
+                // Actualizar también en el array 'productos' para persistir la cantidad
                 let idx = parseInt(document.getElementById("modal-cantidad").getAttribute("data-index"));
                 if (!isNaN(idx) && productos[idx]) {
                     productos[idx].cant = cantidadActual;
@@ -487,7 +487,7 @@ window.onload = function() {
         <h3>Selecciona cantidad</h3>
 
         <div style="display:flex; justify-content:center; align-items:center; margin:15px 0;">
-            <button id="menos" style="width:40px; height:40px; font-size:20px;">âˆ’</button>
+            <button id="menos" style="width:40px; height:40px; font-size:20px;">−</button>
 
             <span id="cantidad-valor" style="margin:0 20px; font-size:20px;">1</span>
 
@@ -501,4 +501,4 @@ window.onload = function() {
     </div>
 </div>
 </body>
-</html>
+    </html>
